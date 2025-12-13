@@ -7,7 +7,9 @@ import {
 
 import { Server, Socket } from "socket.io";
 
-@WebSocketGateway({ cors: { origin: "*" } })
+@WebSocketGateway({
+	cors: { origin: [process.env.HOST || "*"] }
+})
 export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	@WebSocketServer()
 	server: Server;
