@@ -1,0 +1,15 @@
+# MediaSync
+
+A lightweight NestJS backend for synchronizing media playback across multiple clients in real-time. Built with WebSockets for instant state synchronization with minimal latency. Full support YouTube & YouTube Shorts navigation.
+
+## Building
+
+_Pre-Requisites:_
+
+1. [Node](https://nodejs.org/en/)
+2. [Yarn](https://yarnpkg.com/)
+
+## Contributors
+
+**_Note:_** If you would like to contribute to this repository, feel free to send a pull request, and I will review your code.
+Also feel free to post about any problems that may arise in the issues section of the repository.
