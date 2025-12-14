@@ -15,6 +15,7 @@ export class VideoController {
 		this.stateService.state.type = "youtube";
 		this.stateService.state.id = id;
 		this.stateService.state.time = 0;
+		this.stateService.state.looped = false;
 		this.stateService.startTimer();
 		this.appGateway.broadcast("video", this.stateService.state);
 		return { success: true };

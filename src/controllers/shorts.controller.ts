@@ -27,6 +27,7 @@ export class ShortsController {
 			this.stateService.state.id = ids[0];
 			this.stateService.state.index = 0;
 			this.stateService.state.time = 0;
+			this.stateService.state.looped = true;
 			this.stateService.clearTimer();
 			this.appGateway.broadcast("video", this.stateService.state);
 
@@ -42,6 +43,7 @@ export class ShortsController {
 			this.stateService.state.index++;
 		this.stateService.state.id = this.stateService.ids[this.stateService.state.index];
 		this.stateService.state.time = 0;
+		this.stateService.state.looped = true;
 		this.stateService.clearTimer();
 		this.appGateway.broadcast("video", this.stateService.state);
 		return { success: true };
@@ -52,6 +54,7 @@ export class ShortsController {
 		if (this.stateService.state.index - 1 >= 0) this.stateService.state.index--;
 		this.stateService.state.id = this.stateService.ids[this.stateService.state.index];
 		this.stateService.state.time = 0;
+		this.stateService.state.looped = true;
 		this.stateService.clearTimer();
 		this.appGateway.broadcast("video", this.stateService.state);
 		return { success: true };
