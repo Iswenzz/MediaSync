@@ -10,8 +10,8 @@
 		"prettier": "prettier --write '**/*.{js,jsx,ts,tsx,css}'",
 		"start": "nest start",
 		"start:debug": "nest start --debug --watch",
-		"start:dev": "nest start --watch",
-		"start:prod": "node dist/main"
+		"start:dev": "NODE_ENV=development nest start --watch",
+		"start:prod": "NODE_ENV=production node dist/main"
 	},
 	"dependencies": {
 		"@nestjs/common": "^11.1.9",
