@@ -2,12 +2,12 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 
 import { VideoController } from "@/controllers/video.controller";
-import { ShortsController } from "@/controllers/shorts.controller";
+import { YoutubeController } from "@/controllers/youtube.controller";
 import { StateService } from "@/services/state.service";
 import { AppGateway } from "@/app.gateway";
 
 @Module({
-	controllers: [VideoController, ShortsController],
+	controllers: [VideoController, YoutubeController],
 	providers: [AppGateway, StateService],
 	imports: [
 		ConfigModule.forRoot({

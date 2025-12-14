@@ -10,13 +10,25 @@ export class VideoController {
 		private stateService: StateService
 	) {}
 
-	@Post("youtube")
-	load(@Query("id") id: string) {
-		this.stateService.state.type = "youtube";
-		this.stateService.state.id = id;
+	@Post("next")
+	next() {
+		if (this.stateService.state.index + 1 < this.stateService.ids.length)
+			this.stateService.state.index++;
+		this.stateService.state.id = this.stateService.ids[this.stateService.state.index];
 		this.stateService.state.time = 0;
-		this.stateService.state.looped = false;
-		this.stateService.startTimer();
+		this.stateService.state.looped = true;
+		this.stateService.clearTimer();
+		this.appGateway.broadcast("video", this.stateService.state);
+		return { success: true };
+	}
+
+	@Post("prev")
+	prev() {
+		if (this.stateService.state.index - 1 >= 0) this.stateService.state.index--;
+		this.stateService.state.id = this.stateService.ids[this.stateService.state.index];
+		this.stateService.state.time = 0;
+		this.stateService.state.looped = true;
+		this.stateService.clearTimer();
 		this.appGateway.broadcast("video", this.stateService.state);
 		return { success: true };
 	}
