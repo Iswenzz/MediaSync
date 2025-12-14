@@ -24,9 +24,11 @@ export class ShortsController {
 
 			this.stateService.ids = ids;
 			this.stateService.state.type = "youtube";
+			this.stateService.state.id = ids[0];
 			this.stateService.state.index = 0;
 			this.stateService.state.time = 0;
 			this.stateService.clearTimer();
+			this.appGateway.broadcast("video", this.stateService.state);
 
 			return { success: true, items: ids };
 		} catch (error) {
@@ -41,7 +43,7 @@ export class ShortsController {
 		this.stateService.state.id = this.stateService.ids[this.stateService.state.index];
 		this.stateService.state.time = 0;
 		this.stateService.clearTimer();
-		this.appGateway.broadcast("shorts-next", this.stateService.state);
+		this.appGateway.broadcast("video", this.stateService.state);
 		return { success: true };
 	}
 
@@ -51,7 +53,7 @@ export class ShortsController {
 		this.stateService.state.id = this.stateService.ids[this.stateService.state.index];
 		this.stateService.state.time = 0;
 		this.stateService.clearTimer();
-		this.appGateway.broadcast("shorts-prev", this.stateService.state);
+		this.appGateway.broadcast("video", this.stateService.state);
 		return { success: true };
 	}
 }
