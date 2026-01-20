@@ -1,13 +1,15 @@
 import { Controller, Post, Query } from "@nestjs/common";
 
 import { StateService } from "@/services/state.service";
+import { BrowserService } from "@/services/browser.service";
 import { AppGateway } from "@/app.gateway";
 
 @Controller("api/youtube")
 export class YoutubeController {
 	constructor(
 		private appGateway: AppGateway,
-		private stateService: StateService
+		private stateService: StateService,
+		private browserService: BrowserService
 	) {}
 
 	@Post("video")
@@ -16,14 +18,28 @@ export class YoutubeController {
 		this.stateService.state.id = id;
 		this.stateService.state.time = 0;
 		this.stateService.state.looped = false;
+		this.stateService.state.mode = "video";
 		this.stateService.startTimer();
 		this.appGateway.broadcast("video", this.stateService.state);
 		return { success: true };
 	}
 
 	@Post("shorts")
-	async youtube(@Query("keywords") keywords: string) {
-		const keywordArray = (keywords || "").split(",");
+	async youtube(@Query("keywords") keywords?: string) {
+		if (!keywords) {
+			const result = await this.browserService.startShorts();
+			if (result.success && result.id) {
+				this.stateService.state.type = "youtube";
+				this.stateService.state.id = result.id;
+				this.stateService.state.time = 0;
+				this.stateService.state.looped = true;
+				this.stateService.state.mode = "browser-shorts";
+				this.stateService.clearTimer();
+				this.appGateway.broadcast("video", this.stateService.state);
+			}
+			return result;
+		}
+		const keywordArray = keywords.split(",");
 		const query = encodeURIComponent(`${keywordArray.join(" ")} #shorts`);
 		try {
 			const response = await fetch(
@@ -41,6 +57,7 @@ export class YoutubeController {
 			this.stateService.state.index = 0;
 			this.stateService.state.time = 0;
 			this.stateService.state.looped = true;
+			this.stateService.state.mode = "shorts";
 			this.stateService.clearTimer();
 			this.appGateway.broadcast("video", this.stateService.state);
 			return { success: true, ids };
@@ -71,8 +88,9 @@ export class YoutubeController {
 					this.stateService.state.id = ids[0];
 					this.stateService.state.index = 0;
 					this.stateService.state.time = 0;
-					this.stateService.state.looped = true;
+					this.stateService.state.looped = true;				
 					this.stateService.clearTimer();
+					this.stateService.state.mode = "playlist";					
 					this.appGateway.broadcast("video", this.stateService.state);
 					return { success: true, ids, nextPageToken: data.nextPageToken };
 				}

@@ -20,6 +20,7 @@
 		"@nestjs/platform-express": "^11.1.9",
 		"@nestjs/platform-socket.io": "^11.1.9",
 		"@nestjs/websockets": "^11.1.9",
+		"patchright": "^1.57.0",
 		"reflect-metadata": "^0.2.2",
 		"rxjs": "^7.8.2"
 	},

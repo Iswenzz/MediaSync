@@ -10,7 +10,8 @@ export class StateService {
 		index: 0,
 		time: 0,
 		paused: false,
-		looped: false
+		looped: false,
+		mode: ""
 	};
 	ids: string[];
 	timer: NodeJS.Timeout | null;
@@ -37,4 +38,5 @@ type State = {
 	time: number;
 	paused: boolean;
 	looped: boolean;
+	mode: string;
 };
