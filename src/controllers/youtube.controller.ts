@@ -15,10 +15,10 @@ export class YoutubeController {
 	@Post("video")
 	load(@Query("id") id: string) {
 		this.stateService.state.type = "youtube";
+		this.stateService.state.mode = "video";
 		this.stateService.state.id = id;
 		this.stateService.state.time = 0;
 		this.stateService.state.looped = false;
-		this.stateService.state.mode = "video";
 		this.stateService.startTimer();
 		this.appGateway.broadcast("video", this.stateService.state);
 		return { success: true };
@@ -30,10 +30,10 @@ export class YoutubeController {
 			const result = await this.browserService.startShorts();
 			if (result.success && result.id) {
 				this.stateService.state.type = "youtube";
+				this.stateService.state.mode = "browser-shorts";
 				this.stateService.state.id = result.id;
 				this.stateService.state.time = 0;
 				this.stateService.state.looped = true;
-				this.stateService.state.mode = "browser-shorts";
 				this.stateService.clearTimer();
 				this.appGateway.broadcast("video", this.stateService.state);
 			}
@@ -53,11 +53,11 @@ export class YoutubeController {
 			const ids = data.items.map((item: any) => item.id.videoId);
 			this.stateService.ids = ids;
 			this.stateService.state.type = "youtube";
+			this.stateService.state.mode = "shorts";
 			this.stateService.state.id = ids[0];
 			this.stateService.state.index = 0;
 			this.stateService.state.time = 0;
 			this.stateService.state.looped = true;
-			this.stateService.state.mode = "shorts";
 			this.stateService.clearTimer();
 			this.appGateway.broadcast("video", this.stateService.state);
 			return { success: true, ids };
@@ -85,12 +85,12 @@ export class YoutubeController {
 					const ids = data.items.map((item: any) => item.snippet.resourceId.videoId);
 					this.stateService.ids = ids;
 					this.stateService.state.type = "youtube";
+					this.stateService.state.mode = "playlist";
 					this.stateService.state.id = ids[0];
 					this.stateService.state.index = 0;
 					this.stateService.state.time = 0;
-					this.stateService.state.looped = true;				
+					this.stateService.state.looped = true;
 					this.stateService.clearTimer();
-					this.stateService.state.mode = "playlist";					
 					this.appGateway.broadcast("video", this.stateService.state);
 					return { success: true, ids, nextPageToken: data.nextPageToken };
 				}

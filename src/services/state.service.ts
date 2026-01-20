@@ -33,10 +33,10 @@ export class StateService {
 
 type State = {
 	type: string;
+	mode: string;
 	id: string;
 	index: number;
 	time: number;
 	paused: boolean;
 	looped: boolean;
-	mode: string;
 };

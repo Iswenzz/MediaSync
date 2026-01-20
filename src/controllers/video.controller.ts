@@ -23,7 +23,10 @@ export class VideoController {
 			}
 			return result;
 		}
-		if (this.stateService.state.mode === "shorts" || this.stateService.state.mode === "playlist") {
+		if (
+			this.stateService.state.mode === "shorts" ||
+			this.stateService.state.mode === "playlist"
+		) {
 			if (this.stateService.state.index + 1 < this.stateService.ids.length)
 				this.stateService.state.index++;
 			this.stateService.state.id = this.stateService.ids[this.stateService.state.index];
@@ -47,7 +50,10 @@ export class VideoController {
 			}
 			return result;
 		}
-		if (this.stateService.state.mode === "shorts" || this.stateService.state.mode === "playlist") {
+		if (
+			this.stateService.state.mode === "shorts" ||
+			this.stateService.state.mode === "playlist"
+		) {
 			if (this.stateService.state.index - 1 >= 0) this.stateService.state.index--;
 			this.stateService.state.id = this.stateService.ids[this.stateService.state.index];
 			this.stateService.state.time = 0;
@@ -72,12 +78,13 @@ export class VideoController {
 	seek(@Query("time") time: string) {
 		this.stateService.clearTimer();
 		const parts = (time || "0").split(":").map(p => parseInt(p));
-		this.stateService.state.time = parts.length === 3
-			? parts[0] * 3600 + parts[1] * 60 + parts[2]
-			: parts.length === 2
-			? parts[0] * 60 + parts[1]
-			: parts[0];
-		if(!this.stateService.state.looped) this.stateService.startTimer();
+		this.stateService.state.time =
+			parts.length === 3
+				? parts[0] * 3600 + parts[1] * 60 + parts[2]
+				: parts.length === 2
+					? parts[0] * 60 + parts[1]
+					: parts[0];
+		if (!this.stateService.state.looped) this.stateService.startTimer();
 		this.appGateway.broadcast("video-seek", this.stateService.state);
 		return { success: true };
 	}
