@@ -18,3 +18,5 @@ dist/*
 .env.development
 .env.test
 tsconfig.tsbuildinfo
+
+.browser-data
