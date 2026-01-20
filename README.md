@@ -9,6 +9,10 @@ _Pre-Requisites:_
 1. [Node](https://nodejs.org/en/)
 2. [Yarn](https://yarnpkg.com/)
 
+_Pre-Requisites:_
+
+    yarn patchright install
+
 ## Contributors
 
 **_Note:_** If you would like to contribute to this repository, feel free to send a pull request, and I will review your code.
