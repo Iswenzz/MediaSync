@@ -1,7 +1,5 @@
 import { Injectable } from "@nestjs/common";
 
-import { AppGateway } from "@/app.gateway";
-
 @Injectable()
 export class StateService {
 	state: State = {
@@ -14,20 +12,34 @@ export class StateService {
 		mode: ""
 	};
 	ids: string[];
-	timer: NodeJS.Timeout | null;
+	startedAt: number | null = null;
+	pausedTime: number = 0;
 
-	constructor(private appGateway: AppGateway) {}
-
-	startTimer() {
-		this.clearTimer();
-		this.timer = setInterval(() => {
-			this.state.time += 5;
-			this.appGateway.broadcast("video", this.state);
-		}, 5000);
+	getCurrentState() {
+		if (this.startedAt) {
+			this.state.time = Math.floor((Date.now() - this.startedAt) / 1000) + this.pausedTime;
+		}
+		return this.state;
 	}
-
-	clearTimer() {
-		if (this.timer) clearInterval(this.timer);
+	resetTime() {
+		this.state.time = 0;
+		this.startedAt = Date.now();
+		this.pausedTime = 0;
+	}
+	pauseTime() {
+		if (this.startedAt) {
+			this.pausedTime = Math.floor((Date.now() - this.startedAt) / 1000) + this.pausedTime;
+			this.state.time = this.pausedTime;
+			this.startedAt = null;
+		}
+	}
+	resumeTime() {
+		this.startedAt = Date.now();
+	}
+	seekTime(time: number) {
+		this.state.time = time;
+		this.pausedTime = time;
+		this.startedAt = this.state.paused ? null : Date.now();
 	}
 }
 
