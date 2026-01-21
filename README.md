@@ -13,6 +13,21 @@ _Pre-Requisites:_
 
     yarn patchright install
 
+## Browser
+
+_Host:_
+
+    apt install xvfb x11vnc x11-apps
+    Xvfb :99 -screen 0 1280x720x24 &
+    export DISPLAY=:99
+    x11vnc -nopw -listen localhost &
+    xclock
+
+_Client:_
+
+    ssh -L 5900:localhost:5900 user@server_ip
+    login to localhost:5900 with tigervnc
+
 ## Contributors
 
 **_Note:_** If you would like to contribute to this repository, feel free to send a pull request, and I will review your code.
