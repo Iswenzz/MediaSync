@@ -4,15 +4,15 @@ import * as path from "path";
 
 @Injectable()
 export class BrowserService implements OnModuleDestroy {
-	private context: BrowserContext | null = null;
-	private page: Page | null = null;
+	private context: Nullable<BrowserContext> = null;
+	private page: Nullable<Page> = null;
 	private readonly userDataDir = path.join(process.cwd(), ".browser-data");
 
 	async onModuleDestroy() {
 		await this.closeBrowser();
 	}
 
-	private async initBrowser() {
+	async initBrowser() {
 		if (!this.context) {
 			this.context = await chromium.launchPersistentContext(this.userDataDir, {
 				headless: true,
@@ -36,57 +36,44 @@ export class BrowserService implements OnModuleDestroy {
 		}
 	}
 
-	private extractVideoId(url: string): string | null {
-		const match = url.match(/\/shorts\/([a-zA-Z0-9_-]+)/);
-		return match ? match[1] : null;
-	}
-
-	async startShorts() {
-		try {
-			await this.closeBrowser();
-			const context = await this.initBrowser();
+	async getPage() {
+		const context = await this.initBrowser();
+		if (!this.page) {
 			this.page = context.pages()[0] || (await context.newPage());
-			await this.page.goto("https://www.youtube.com/shorts", {
-				waitUntil: "networkidle"
-			});
-			await this.page.waitForURL(/youtube\.com\/shorts\/[a-zA-Z0-9_-]+/, { timeout: 15000 });
-			const videoId = this.extractVideoId(this.page.url());
-			if (videoId) return { success: true, id: videoId };
-			return { success: false, error: "Could not get video ID" };
-		} catch (error) {
-			return { success: false, error: error.message };
 		}
+		return this.page;
 	}
 
-	async nextShort() {
-		if (!this.page) return { success: false, error: "Browser not open." };
-		try {
-			const currentUrl = this.page.url();
-			await this.page.keyboard.press("ArrowDown");
-			await this.page.waitForFunction(oldUrl => window.location.href !== oldUrl, currentUrl, {
-				timeout: 3000
-			});
-			const videoId = this.extractVideoId(this.page.url());
-			if (videoId) return { success: true, id: videoId };
-			return { success: false, error: "Could not get video ID" };
-		} catch (error) {
-			return { success: false, error: error.message };
-		}
+	hasActivePage() {
+		return this.page !== null;
 	}
 
-	async prevShort() {
-		if (!this.page) return { success: false, error: "Browser not open." };
-		try {
-			const currentUrl = this.page.url();
-			await this.page.keyboard.press("ArrowUp");
-			await this.page.waitForFunction(oldUrl => window.location.href !== oldUrl, currentUrl, {
-				timeout: 3000
-			});
-			const videoId = this.extractVideoId(this.page.url());
-			if (videoId) return { success: true, id: videoId };
-			return { success: false, error: "Could not get video ID" };
-		} catch (error) {
-			return { success: false, error: error.message };
-		}
+	async waitForUrlChange(currentUrl: string, timeout: number = 3000) {
+		if (!this.page) throw new Error("Browser not open");
+		await this.page.waitForFunction(oldUrl => window.location.href !== oldUrl, currentUrl, {
+			timeout
+		});
+	}
+
+	getCurrentUrl() {
+		return this.page?.url() ?? null;
+	}
+
+	async pressKey(key: string) {
+		if (!this.page) throw new Error("Browser not open");
+		await this.page.keyboard.press(key);
+	}
+
+	async navigateTo(
+		url: string,
+		waitUntil: "networkidle" | "load" | "domcontentloaded" = "networkidle"
+	) {
+		const page = await this.getPage();
+		await page.goto(url, { waitUntil });
+	}
+
+	async waitForUrl(pattern: RegExp, timeout: number = 15000) {
+		if (!this.page) throw new Error("Browser not open");
+		await this.page.waitForURL(pattern, { timeout });
 	}
 }

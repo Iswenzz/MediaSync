@@ -12,7 +12,7 @@ export class StateService {
 		mode: ""
 	};
 	ids: string[];
-	startedAt: number | null = null;
+	startedAt: Nullable<number> = null;
 	pausedTime: number = 0;
 
 	getCurrentState() {
@@ -21,21 +21,24 @@ export class StateService {
 		}
 		return this.state;
 	}
+
 	resetTime() {
 		this.state.time = 0;
 		this.startedAt = Date.now();
 		this.pausedTime = 0;
 	}
+
 	pauseTime() {
-		if (this.startedAt) {
-			this.pausedTime = Math.floor((Date.now() - this.startedAt) / 1000) + this.pausedTime;
-			this.state.time = this.pausedTime;
-			this.startedAt = null;
-		}
+		if (!this.startedAt) return;
+		this.pausedTime = Math.floor((Date.now() - this.startedAt) / 1000) + this.pausedTime;
+		this.state.time = this.pausedTime;
+		this.startedAt = null;
 	}
+
 	resumeTime() {
 		this.startedAt = Date.now();
 	}
+
 	seekTime(time: number) {
 		this.state.time = time;
 		this.pausedTime = time;
