@@ -17,10 +17,9 @@ export class YoutubeController {
 		this.stateService.state.type = "youtube";
 		this.stateService.state.mode = "video";
 		this.stateService.state.id = id;
-		this.stateService.state.time = 0;
 		this.stateService.state.looped = false;
-		this.stateService.startTimer();
-		this.appGateway.broadcast("video", this.stateService.state);
+		this.stateService.resetTime();
+		this.appGateway.broadcast("video", this.stateService.getCurrentState());
 		return { success: true };
 	}
 
@@ -32,10 +31,9 @@ export class YoutubeController {
 				this.stateService.state.type = "youtube";
 				this.stateService.state.mode = "browser-shorts";
 				this.stateService.state.id = result.id;
-				this.stateService.state.time = 0;
 				this.stateService.state.looped = true;
-				this.stateService.clearTimer();
-				this.appGateway.broadcast("video", this.stateService.state);
+				this.stateService.resetTime();
+				this.appGateway.broadcast("video", this.stateService.getCurrentState());
 			}
 			return result;
 		}
@@ -56,10 +54,9 @@ export class YoutubeController {
 			this.stateService.state.mode = "shorts";
 			this.stateService.state.id = ids[0];
 			this.stateService.state.index = 0;
-			this.stateService.state.time = 0;
 			this.stateService.state.looped = true;
-			this.stateService.clearTimer();
-			this.appGateway.broadcast("video", this.stateService.state);
+			this.stateService.resetTime();
+			this.appGateway.broadcast("video", this.stateService.getCurrentState());
 			return { success: true, ids };
 		} catch (error) {
 			return { success: false, error: error.message };
@@ -88,10 +85,9 @@ export class YoutubeController {
 					this.stateService.state.mode = "playlist";
 					this.stateService.state.id = ids[0];
 					this.stateService.state.index = 0;
-					this.stateService.state.time = 0;
 					this.stateService.state.looped = true;
-					this.stateService.clearTimer();
-					this.appGateway.broadcast("video", this.stateService.state);
+					this.stateService.resetTime();
+					this.appGateway.broadcast("video", this.stateService.getCurrentState());
 					return { success: true, ids, nextPageToken: data.nextPageToken };
 				}
 				pageToken = data.nextPageToken;

@@ -18,8 +18,8 @@ export class VideoController {
 			const result = await this.browserService.nextShort();
 			if (result.success && result.id) {
 				this.stateService.state.id = result.id;
-				this.stateService.state.time = 0;
-				this.appGateway.broadcast("video", this.stateService.state);
+				this.stateService.resetTime();
+				this.appGateway.broadcast("video", this.stateService.getCurrentState());
 			}
 			return result;
 		}
@@ -30,10 +30,9 @@ export class VideoController {
 			if (this.stateService.state.index + 1 < this.stateService.ids.length)
 				this.stateService.state.index++;
 			this.stateService.state.id = this.stateService.ids[this.stateService.state.index];
-			this.stateService.state.time = 0;
+			this.stateService.resetTime();
 			this.stateService.state.looped = true;
-			this.stateService.clearTimer();
-			this.appGateway.broadcast("video", this.stateService.state);
+			this.appGateway.broadcast("video", this.stateService.getCurrentState());
 			return { success: true };
 		}
 		return { success: false, error: "No active playlist" };
@@ -45,8 +44,8 @@ export class VideoController {
 			const result = await this.browserService.prevShort();
 			if (result.success && result.id) {
 				this.stateService.state.id = result.id;
-				this.stateService.state.time = 0;
-				this.appGateway.broadcast("video", this.stateService.state);
+				this.stateService.resetTime();
+				this.appGateway.broadcast("video", this.stateService.getCurrentState());
 			}
 			return result;
 		}
@@ -56,10 +55,9 @@ export class VideoController {
 		) {
 			if (this.stateService.state.index - 1 >= 0) this.stateService.state.index--;
 			this.stateService.state.id = this.stateService.ids[this.stateService.state.index];
-			this.stateService.state.time = 0;
+			this.stateService.resetTime();
 			this.stateService.state.looped = true;
-			this.stateService.clearTimer();
-			this.appGateway.broadcast("video", this.stateService.state);
+			this.appGateway.broadcast("video", this.stateService.getCurrentState());
 			return { success: true };
 		}
 		return { success: false, error: "No active playlist" };
@@ -68,24 +66,23 @@ export class VideoController {
 	@Post("pause")
 	pause() {
 		this.stateService.state.paused = !this.stateService.state.paused;
-		if (this.stateService.state.paused) this.stateService.clearTimer();
-		else if (!this.stateService.state.looped) this.stateService.startTimer();
-		this.appGateway.broadcast("video-pause", this.stateService.state);
+		if (this.stateService.state.paused) this.stateService.pauseTime();
+		else this.stateService.resumeTime();
+		this.appGateway.broadcast("video-pause", this.stateService.getCurrentState());
 		return { success: true };
 	}
 
 	@Post("seek")
 	seek(@Query("time") time: string) {
-		this.stateService.clearTimer();
 		const parts = (time || "0").split(":").map(p => parseInt(p));
-		this.stateService.state.time =
+		const seekTime =
 			parts.length === 3
 				? parts[0] * 3600 + parts[1] * 60 + parts[2]
 				: parts.length === 2
 					? parts[0] * 60 + parts[1]
 					: parts[0];
-		if (!this.stateService.state.looped) this.stateService.startTimer();
-		this.appGateway.broadcast("video-seek", this.stateService.state);
+		this.stateService.seekTime(seekTime);
+		this.appGateway.broadcast("video-seek", this.stateService.getCurrentState());
 		return { success: true };
 	}
 }
