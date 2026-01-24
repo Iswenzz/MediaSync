@@ -166,13 +166,23 @@ export class YoutubeService {
 	}
 
 	seek(time: string) {
-		const parts = (time || "0").split(":").map(p => parseInt(p));
-		const seekTime =
+		const timeStr = time || "0";
+		const isRelative = timeStr.startsWith("p") || timeStr.startsWith("n");
+		const cleanTime = isRelative ? timeStr.slice(1) : timeStr;
+		const parts = cleanTime.split(":").map(p => parseInt(p));
+		const timeDelta =
 			parts.length === 3
 				? parts[0] * 3600 + parts[1] * 60 + parts[2]
 				: parts.length === 2
 					? parts[0] * 60 + parts[1]
 					: parts[0];
+
+		let seekTime = timeDelta;
+		if (isRelative) {
+			const currentTime = this.stateService.getCurrentState().time;
+			seekTime = timeStr[0] === "p" ? currentTime + timeDelta : currentTime - timeDelta;
+		}
+		if (isNaN(seekTime) || seekTime < 0) seekTime = 0;
 		this.stateService.seekTime(seekTime);
 		this.broadcast("video-seek");
 		return { success: true };
