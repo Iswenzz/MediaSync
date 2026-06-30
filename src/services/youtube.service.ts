@@ -29,6 +29,7 @@ export class YoutubeService {
 		this.stateService.state.mode = "video";
 		this.stateService.state.id = id;
 		this.stateService.state.looped = false;
+		this.stateService.state.live = await this.isLiveStream(id);
 		this.stateService.state.duration = await this.getVideoDuration(id);
 		this.stateService.resetTime();
 		this.broadcast("video");
@@ -49,6 +50,7 @@ export class YoutubeService {
 				this.stateService.state.mode = "browser-shorts";
 				this.stateService.state.id = videoId;
 				this.stateService.state.looped = true;
+				this.stateService.state.live = false;
 				this.stateService.state.duration = 0;
 				this.stateService.resetTime();
 				this.broadcast("video");
@@ -79,6 +81,7 @@ export class YoutubeService {
 			this.stateService.state.id = ids[0];
 			this.stateService.state.index = 0;
 			this.stateService.state.looped = true;
+			this.stateService.state.live = false;
 			this.stateService.state.duration = 0;
 			this.stateService.resetTime();
 			this.broadcast("video");
@@ -109,6 +112,7 @@ export class YoutubeService {
 					this.stateService.state.id = ids[0];
 					this.stateService.state.index = 0;
 					this.stateService.state.looped = true;
+					this.stateService.state.live = false;
 					this.stateService.state.duration = 0;
 					this.stateService.resetTime();
 					this.broadcast("video");
@@ -185,6 +189,19 @@ export class YoutubeService {
 			return { success: false, error: "Could not get video ID" };
 		} catch (error) {
 			return { success: false, error: error.message };
+		}
+	}
+
+	private async isLiveStream(videoId: string) {
+		try {
+			const response = await fetch(
+				`https://www.googleapis.com/youtube/v3/videos?part=liveStreamingDetails&id=${videoId}&key=${process.env.YOUTUBE_API_KEY}`
+			);
+			const data = await response.json();
+			if (data.error || !data.items?.length) return false;
+			return "liveStreamingDetails" in data.items[0];
+		} catch {
+			return false;
 		}
 	}
 

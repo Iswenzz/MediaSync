@@ -10,6 +10,7 @@ export class StateService {
 		duration: 0,
 		paused: false,
 		looped: false,
+		live: false,
 		mode: ""
 	};
 	ids: string[] = [];
@@ -56,4 +57,5 @@ type State = {
 	duration: number;
 	paused: boolean;
 	looped: boolean;
+	live: boolean;
 };

@@ -106,6 +106,7 @@ export class TelegramService implements OnModuleInit {
 			this.stateService.state.mode = "video";
 			this.stateService.state.id = `${this.channel}:${messageId}`;
 			this.stateService.state.looped = false;
+			this.stateService.state.live = false;
 			this.stateService.state.duration = 0;
 			this.stateService.state.paused = false;
 			this.stateService.resetTime();
