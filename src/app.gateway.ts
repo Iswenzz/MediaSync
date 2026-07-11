@@ -23,14 +23,11 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
 	handleConnection(client: Socket) {
 		const roomId = this.getRoomId(client);
-		const room = roomId ? this.rooms.get(roomId) : null;
-		if (!roomId || !room) {
-			client.emit("invalid-room");
-			return;
-		}
+		if (!roomId) return;
 		client.join(roomId);
 		this.logger.log(`Client ${client.id} joined room ${roomId}`);
-		client.emit("video", this.rooms.getCurrentState(room));
+		const room = this.rooms.get(roomId);
+		if (room) client.emit("video", this.rooms.getCurrentState(room));
 	}
 
 	handleDisconnect(client: Socket) {
@@ -39,6 +36,10 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
 	emitToRoom(roomId: string, event: string, data: any) {
 		this.server.to(roomId).emit(event, data);
+	}
+
+	countClients(roomId: string) {
+		return this.server.sockets.adapter.rooms.get(roomId)?.size ?? 0;
 	}
 
 	private getRoomId(client: Socket) {

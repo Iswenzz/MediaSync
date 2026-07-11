@@ -4,9 +4,10 @@ import { Injectable } from "@nestjs/common";
 export class RoomService {
 	private rooms = new Map<string, RoomState>();
 
-	ensure(id: string) {
-		if (this.rooms.has(id)) return false;
-		this.rooms.set(id, {
+	getOrCreate(id: string): RoomState {
+		const existing = this.rooms.get(id);
+		if (existing) return existing;
+		const room: RoomState = {
 			id,
 			state: {
 				type: "",
@@ -22,12 +23,21 @@ export class RoomService {
 			ids: [],
 			startedAt: null,
 			pausedTime: 0
-		});
-		return true;
+		};
+		this.rooms.set(id, room);
+		return room;
 	}
 
 	get(id: string) {
 		return this.rooms.get(id) ?? null;
+	}
+
+	getRoomIds() {
+		return [...this.rooms.keys()];
+	}
+
+	delete(id: string) {
+		return this.rooms.delete(id);
 	}
 
 	getCurrentState(room: RoomState) {
