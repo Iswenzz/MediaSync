@@ -3,7 +3,7 @@ import type { Response } from "express";
 
 import { TelegramService } from "@/services/telegram.service";
 import { RoomPipe } from "@/pipes/room.pipe";
-import type { RoomState } from "@/services/rooms.service";
+import type { RoomState } from "@/services/room.service";
 
 @Controller("api/telegram")
 export class TelegramController {

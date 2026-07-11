@@ -8,7 +8,7 @@ import {
 import { Logger } from "@nestjs/common";
 import { Server, Socket } from "socket.io";
 
-import { RoomsService } from "@/services/rooms.service";
+import { RoomService } from "@/services/room.service";
 
 @WebSocketGateway({
 	cors: { origin: [process.env.HOST || "*"] }
@@ -19,7 +19,7 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	@WebSocketServer()
 	server: Server;
 
-	constructor(private rooms: RoomsService) {}
+	constructor(private rooms: RoomService) {}
 
 	handleConnection(client: Socket) {
 		const roomId = this.getRoomId(client);

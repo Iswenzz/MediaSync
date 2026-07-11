@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 
 @Injectable()
-export class RoomsService {
+export class RoomService {
 	private rooms = new Map<string, RoomState>();
 
 	ensure(id: string) {

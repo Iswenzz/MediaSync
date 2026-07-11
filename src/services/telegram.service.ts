@@ -6,7 +6,7 @@ import type { Response } from "express";
 import { AppGateway } from "@/app.gateway";
 import { ChunkCache, CHUNK_SIZE } from "@/utils/chunk-cache";
 
-import { RoomsService, RoomState } from "./rooms.service";
+import { RoomService, RoomState } from "./room.service";
 
 const { StringSession } = sessions;
 
@@ -23,11 +23,11 @@ export class TelegramService implements OnModuleInit {
 
 	constructor(
 		private appGateway: AppGateway,
-		private roomsService: RoomsService
+		private roomService: RoomService
 	) {}
 
 	private emit(room: RoomState, event: string) {
-		this.appGateway.emitToRoom(room.id, event, this.roomsService.getCurrentState(room));
+		this.appGateway.emitToRoom(room.id, event, this.roomService.getCurrentState(room));
 	}
 
 	async onModuleInit() {
@@ -111,7 +111,7 @@ export class TelegramService implements OnModuleInit {
 			room.state.live = false;
 			room.state.duration = 0;
 			room.state.paused = false;
-			this.roomsService.resetTime(room);
+			this.roomService.resetTime(room);
 			this.emit(room, "video");
 			this.activeVideo = { metadata, cache: new ChunkCache() };
 			return { success: true, channel: this.channel };

@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 
 import { AppGateway } from "@/app.gateway";
-import { RoomsService, RoomState } from "@/services/rooms.service";
+import { RoomService, RoomState } from "@/services/room.service";
 import { YoutubeService } from "@/services/youtube.service";
 import { TelegramService } from "@/services/telegram.service";
 
@@ -9,13 +9,13 @@ import { TelegramService } from "@/services/telegram.service";
 export class VideoService {
 	constructor(
 		private appGateway: AppGateway,
-		private roomsService: RoomsService,
+		private roomService: RoomService,
 		private youtubeService: YoutubeService,
 		private telegramService: TelegramService
 	) {}
 
 	private emit(room: RoomState, event: string) {
-		this.appGateway.emitToRoom(room.id, event, this.roomsService.getCurrentState(room));
+		this.appGateway.emitToRoom(room.id, event, this.roomService.getCurrentState(room));
 	}
 
 	next(room: RoomState) {
@@ -35,9 +35,9 @@ export class VideoService {
 	pause(room: RoomState) {
 		room.state.paused = !room.state.paused;
 		if (room.state.paused) {
-			this.roomsService.pauseTime(room);
+			this.roomService.pauseTime(room);
 		} else {
-			this.roomsService.resumeTime(room);
+			this.roomService.resumeTime(room);
 		}
 		this.emit(room, "video-pause");
 		return { success: true };
@@ -57,11 +57,11 @@ export class VideoService {
 
 		let seekTime = timeDelta;
 		if (isRelative) {
-			const currentTime = this.roomsService.getCurrentState(room).time;
+			const currentTime = this.roomService.getCurrentState(room).time;
 			seekTime = timeStr[0] === "p" ? currentTime + timeDelta : currentTime - timeDelta;
 		}
 		if (isNaN(seekTime) || seekTime < 0) seekTime = 0;
-		this.roomsService.seekTime(room, seekTime);
+		this.roomService.seekTime(room, seekTime);
 		this.emit(room, "video-seek");
 		return { success: true };
 	}

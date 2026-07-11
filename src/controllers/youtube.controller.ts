@@ -2,7 +2,7 @@ import { Controller, Post, Query } from "@nestjs/common";
 
 import { YoutubeService } from "@/services/youtube.service";
 import { RoomPipe } from "@/pipes/room.pipe";
-import type { RoomState } from "@/services/rooms.service";
+import type { RoomState } from "@/services/room.service";
 
 @Controller("api/youtube")
 export class YoutubeController {

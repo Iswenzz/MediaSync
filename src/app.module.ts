@@ -2,21 +2,21 @@ import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 
 import { AppGateway } from "./app.gateway";
-import { RoomsController } from "./controllers/rooms.controller";
+import { RoomController } from "./controllers/room.controller";
 import { YoutubeController } from "./controllers/youtube.controller";
 import { TelegramController } from "./controllers/telegram.controller";
 import { VideoController } from "./controllers/video.controller";
-import { RoomsService } from "./services/rooms.service";
+import { RoomService } from "./services/room.service";
 import { BrowserService } from "./services/browser.service";
 import { YoutubeService } from "./services/youtube.service";
 import { TelegramService } from "./services/telegram.service";
 import { VideoService } from "./services/video.service";
 
 @Module({
-	controllers: [RoomsController, YoutubeController, TelegramController, VideoController],
+	controllers: [RoomController, YoutubeController, TelegramController, VideoController],
 	providers: [
 		AppGateway,
-		RoomsService,
+		RoomService,
 		BrowserService,
 		YoutubeService,
 		TelegramService,

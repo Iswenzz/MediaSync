@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 
 import { AppGateway } from "@/app.gateway";
 
-import { RoomsService, RoomState } from "./rooms.service";
+import { RoomService, RoomState } from "./room.service";
 import { BrowserService } from "./browser.service";
 
 @Injectable()
@@ -11,18 +11,18 @@ export class YoutubeService {
 
 	constructor(
 		private appGateway: AppGateway,
-		private roomsService: RoomsService,
+		private roomService: RoomService,
 		private browserService: BrowserService
 	) {}
 
 	private emit(room: RoomState, event: string) {
-		this.appGateway.emitToRoom(room.id, event, this.roomsService.getCurrentState(room));
+		this.appGateway.emitToRoom(room.id, event, this.roomService.getCurrentState(room));
 	}
 
 	async video(room: RoomState, url: string, ifEnded?: string) {
 		const id = this.extractVideoId(url);
 		if (ifEnded) {
-			const currentState = this.roomsService.getCurrentState(room);
+			const currentState = this.roomService.getCurrentState(room);
 			if (!currentState.duration || currentState.time < currentState.duration) {
 				return { success: false, error: "Video has not ended" };
 			}
@@ -33,7 +33,7 @@ export class YoutubeService {
 		room.state.looped = false;
 		room.state.live = await this.isLiveStream(id);
 		room.state.duration = await this.getVideoDuration(id);
-		this.roomsService.resetTime(room);
+		this.roomService.resetTime(room);
 		this.emit(room, "video");
 		return { success: true };
 	}
@@ -55,7 +55,7 @@ export class YoutubeService {
 				room.state.looped = true;
 				room.state.live = false;
 				room.state.duration = 0;
-				this.roomsService.resetTime(room);
+				this.roomService.resetTime(room);
 				this.emit(room, "video");
 				return { success: true, id: videoId };
 			}
@@ -86,7 +86,7 @@ export class YoutubeService {
 			room.state.looped = true;
 			room.state.live = false;
 			room.state.duration = 0;
-			this.roomsService.resetTime(room);
+			this.roomService.resetTime(room);
 			this.emit(room, "video");
 			return { success: true, ids };
 		} catch (error) {
@@ -117,7 +117,7 @@ export class YoutubeService {
 					room.state.looped = true;
 					room.state.live = false;
 					room.state.duration = 0;
-					this.roomsService.resetTime(room);
+					this.roomService.resetTime(room);
 					this.emit(room, "video");
 					return { success: true, ids, nextPageToken: data.nextPageToken };
 				}
@@ -143,7 +143,7 @@ export class YoutubeService {
 			}
 			room.state.id = room.ids[room.state.index];
 			room.state.looped = true;
-			this.roomsService.resetTime(room);
+			this.roomService.resetTime(room);
 			this.emit(room, "video");
 			return { success: true };
 		}
@@ -161,7 +161,7 @@ export class YoutubeService {
 			}
 			room.state.id = room.ids[room.state.index];
 			room.state.looped = true;
-			this.roomsService.resetTime(room);
+			this.roomService.resetTime(room);
 			this.emit(room, "video");
 			return { success: true };
 		}
@@ -186,7 +186,7 @@ export class YoutubeService {
 
 			if (videoId) {
 				room.state.id = videoId;
-				this.roomsService.resetTime(room);
+				this.roomService.resetTime(room);
 				this.emit(room, "video");
 				return { success: true, id: videoId };
 			}
