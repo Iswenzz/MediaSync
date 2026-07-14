@@ -2,41 +2,44 @@ import { Injectable } from "@nestjs/common";
 
 import { AppGateway } from "@/app.gateway";
 
-import { StateService } from "./state.service";
+import { RoomService, RoomState } from "./room.service";
 import { BrowserService } from "./browser.service";
 
 @Injectable()
 export class YoutubeService {
+	private browserRoom: Nullable<string> = null;
+
 	constructor(
 		private appGateway: AppGateway,
-		private stateService: StateService,
+		private roomService: RoomService,
 		private browserService: BrowserService
 	) {}
 
-	broadcast(event: string) {
-		this.appGateway.broadcast(event, this.stateService.getCurrentState());
+	private emit(room: RoomState, event: string) {
+		this.appGateway.emitToRoom(room.id, event, this.roomService.getCurrentState(room));
 	}
 
-	async video(url: string, ifEnded?: string) {
+	async video(room: RoomState, url: string, ifEnded?: string) {
 		const id = this.extractVideoId(url);
 		if (ifEnded) {
-			const currentState = this.stateService.getCurrentState();
+			const currentState = this.roomService.getCurrentState(room);
 			if (!currentState.duration || currentState.time < currentState.duration) {
 				return { success: false, error: "Video has not ended" };
 			}
 		}
-		this.stateService.state.type = "youtube";
-		this.stateService.state.mode = "video";
-		this.stateService.state.id = id;
-		this.stateService.state.looped = false;
-		this.stateService.state.live = await this.isLiveStream(id);
-		this.stateService.state.duration = await this.getVideoDuration(id);
-		this.stateService.resetTime();
-		this.broadcast("video");
+		room.state.type = "youtube";
+		room.state.mode = "video";
+		room.state.id = id;
+		room.state.looped = false;
+		room.state.live = await this.isLiveStream(id);
+		room.state.duration = await this.getVideoDuration(id);
+		this.roomService.resetTime(room);
+		this.emit(room, "video");
 		return { success: true };
 	}
 
-	async shortsBrowser() {
+	async shortsBrowser(room: RoomState) {
+		this.browserRoom = room.id;
 		try {
 			await this.browserService.closeBrowser();
 			await this.browserService.navigateTo("https://www.youtube.com/shorts");
@@ -46,14 +49,14 @@ export class YoutubeService {
 			const videoId = url ? this.extractShortId(url) : null;
 
 			if (videoId) {
-				this.stateService.state.type = "youtube";
-				this.stateService.state.mode = "browser-shorts";
-				this.stateService.state.id = videoId;
-				this.stateService.state.looped = true;
-				this.stateService.state.live = false;
-				this.stateService.state.duration = 0;
-				this.stateService.resetTime();
-				this.broadcast("video");
+				room.state.type = "youtube";
+				room.state.mode = "browser-shorts";
+				room.state.id = videoId;
+				room.state.looped = true;
+				room.state.live = false;
+				room.state.duration = 0;
+				this.roomService.resetTime(room);
+				this.emit(room, "video");
 				return { success: true, id: videoId };
 			}
 			return { success: false, error: "Could not get video ID" };
@@ -62,7 +65,7 @@ export class YoutubeService {
 		}
 	}
 
-	async shortsKeywords(keywords: string) {
+	async shortsKeywords(room: RoomState, keywords: string) {
 		const keywordArray = keywords.split(",");
 		const query = encodeURIComponent(`${keywordArray.join(" ")} #shorts`);
 		try {
@@ -75,23 +78,23 @@ export class YoutubeService {
 				return { success: false, error: data.error.message };
 			}
 			const ids = data.items.map((item: any) => item.id.videoId);
-			this.stateService.ids = ids;
-			this.stateService.state.type = "youtube";
-			this.stateService.state.mode = "shorts";
-			this.stateService.state.id = ids[0];
-			this.stateService.state.index = 0;
-			this.stateService.state.looped = true;
-			this.stateService.state.live = false;
-			this.stateService.state.duration = 0;
-			this.stateService.resetTime();
-			this.broadcast("video");
+			room.ids = ids;
+			room.state.type = "youtube";
+			room.state.mode = "shorts";
+			room.state.id = ids[0];
+			room.state.index = 0;
+			room.state.looped = true;
+			room.state.live = false;
+			room.state.duration = 0;
+			this.roomService.resetTime(room);
+			this.emit(room, "video");
 			return { success: true, ids };
 		} catch (error) {
 			return { success: false, error: error.message };
 		}
 	}
 
-	async playlist(playlistId: string, page: number = 1) {
+	async playlist(room: RoomState, playlistId: string, page: number = 1) {
 		try {
 			let pageToken = "";
 			let currentPage = 1;
@@ -106,16 +109,16 @@ export class YoutubeService {
 				}
 				if (currentPage === page) {
 					const ids = data.items.map((item: any) => item.snippet.resourceId.videoId);
-					this.stateService.ids = ids;
-					this.stateService.state.type = "youtube";
-					this.stateService.state.mode = "playlist";
-					this.stateService.state.id = ids[0];
-					this.stateService.state.index = 0;
-					this.stateService.state.looped = true;
-					this.stateService.state.live = false;
-					this.stateService.state.duration = 0;
-					this.stateService.resetTime();
-					this.broadcast("video");
+					room.ids = ids;
+					room.state.type = "youtube";
+					room.state.mode = "playlist";
+					room.state.id = ids[0];
+					room.state.index = 0;
+					room.state.looped = true;
+					room.state.live = false;
+					room.state.duration = 0;
+					this.roomService.resetTime(room);
+					this.emit(room, "video");
 					return { success: true, ids, nextPageToken: data.nextPageToken };
 				}
 				pageToken = data.nextPageToken;
@@ -129,44 +132,45 @@ export class YoutubeService {
 		}
 	}
 
-	async next() {
-		const mode = this.stateService.state.mode;
+	async next(room: RoomState) {
+		const mode = room.state.mode;
 		if (mode === "browser-shorts") {
-			return this.navigateBrowserShort("next");
+			return this.navigateBrowserShort(room, "next");
 		}
 		if (mode === "shorts" || mode === "playlist") {
-			if (this.stateService.state.index + 1 < this.stateService.ids.length) {
-				this.stateService.state.index++;
+			if (room.state.index + 1 < room.ids.length) {
+				room.state.index++;
 			}
-			this.stateService.state.id = this.stateService.ids[this.stateService.state.index];
-			this.stateService.state.looped = true;
-			this.stateService.resetTime();
-			this.broadcast("video");
+			room.state.id = room.ids[room.state.index];
+			room.state.looped = true;
+			this.roomService.resetTime(room);
+			this.emit(room, "video");
 			return { success: true };
 		}
 		return { success: false, error: "No active playlist or shorts" };
 	}
 
-	async prev() {
-		const mode = this.stateService.state.mode;
+	async prev(room: RoomState) {
+		const mode = room.state.mode;
 		if (mode === "browser-shorts") {
-			return this.navigateBrowserShort("prev");
+			return this.navigateBrowserShort(room, "prev");
 		}
 		if (mode === "shorts" || mode === "playlist") {
-			if (this.stateService.state.index - 1 >= 0) {
-				this.stateService.state.index--;
+			if (room.state.index - 1 >= 0) {
+				room.state.index--;
 			}
-			this.stateService.state.id = this.stateService.ids[this.stateService.state.index];
-			this.stateService.state.looped = true;
-			this.stateService.resetTime();
-			this.broadcast("video");
+			room.state.id = room.ids[room.state.index];
+			room.state.looped = true;
+			this.roomService.resetTime(room);
+			this.emit(room, "video");
 			return { success: true };
 		}
 
 		return { success: false, error: "No active playlist or shorts" };
 	}
 
-	private async navigateBrowserShort(direction: "next" | "prev") {
+	private async navigateBrowserShort(room: RoomState, direction: "next" | "prev") {
+		if (this.browserRoom !== room.id) return;
 		if (!this.browserService.hasActivePage()) {
 			return { success: false, error: "Browser not open" };
 		}
@@ -181,9 +185,9 @@ export class YoutubeService {
 			const videoId = newUrl ? this.extractShortId(newUrl) : null;
 
 			if (videoId) {
-				this.stateService.state.id = videoId;
-				this.stateService.resetTime();
-				this.broadcast("video");
+				room.state.id = videoId;
+				this.roomService.resetTime(room);
+				this.emit(room, "video");
 				return { success: true, id: videoId };
 			}
 			return { success: false, error: "Could not get video ID" };

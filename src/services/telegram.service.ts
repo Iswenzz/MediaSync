@@ -6,7 +6,7 @@ import type { Response } from "express";
 import { AppGateway } from "@/app.gateway";
 import { ChunkCache, CHUNK_SIZE } from "@/utils/chunk-cache";
 
-import { StateService } from "./state.service";
+import { RoomService, RoomState } from "./room.service";
 
 const { StringSession } = sessions;
 
@@ -14,6 +14,7 @@ const { StringSession } = sessions;
 export class TelegramService implements OnModuleInit {
 	private readonly logger = new Logger(TelegramService.name);
 	private client: Nullable<TelegramClient> = null;
+	private currentRoom: Nullable<string> = null;
 	private channel: string = "";
 	private metadataCache = new Map<string, VideoMetadata>();
 	private activeVideo: Nullable<ActiveVideo> = null;
@@ -22,11 +23,11 @@ export class TelegramService implements OnModuleInit {
 
 	constructor(
 		private appGateway: AppGateway,
-		private stateService: StateService
+		private roomService: RoomService
 	) {}
 
-	broadcast(event: string) {
-		this.appGateway.broadcast(event, this.stateService.getCurrentState());
+	private emit(room: RoomState, event: string) {
+		this.appGateway.emitToRoom(room.id, event, this.roomService.getCurrentState(room));
 	}
 
 	async onModuleInit() {
@@ -62,8 +63,9 @@ export class TelegramService implements OnModuleInit {
 		}
 	}
 
-	async setChannel(name: string, limit: number) {
+	async setChannel(room: RoomState, name: string, limit: number) {
 		if (!this.client) return;
+		this.currentRoom = room.id;
 		const channel = name.replace(/^@/, "");
 		this.channel = channel;
 		this.metadataCache.clear();
@@ -72,26 +74,26 @@ export class TelegramService implements OnModuleInit {
 		this.currentIndex = -1;
 		await this.fetchVideoIds(limit);
 		if (this.videoIds.length) {
-			await this.video(this.videoIds[0]);
+			await this.video(room, this.videoIds[0]);
 		}
 		return { success: true, channel: this.channel };
 	}
 
-	async next() {
-		if (!this.videoIds.length) return;
+	async next(room: RoomState) {
+		if (!this.videoIds.length || this.currentRoom !== room.id) return;
 		this.currentIndex = (this.currentIndex + 1) % this.videoIds.length;
-		return this.video(this.videoIds[this.currentIndex]);
+		return this.video(room, this.videoIds[this.currentIndex]);
 	}
 
-	async prev() {
-		if (!this.videoIds.length) return;
+	async prev(room: RoomState) {
+		if (!this.videoIds.length || this.currentRoom !== room.id) return;
 		this.currentIndex =
 			this.currentIndex <= 0 ? this.videoIds.length - 1 : this.currentIndex - 1;
-		return this.video(this.videoIds[this.currentIndex]);
+		return this.video(room, this.videoIds[this.currentIndex]);
 	}
 
-	async video(messageId: number) {
-		if (!this.channel) {
+	async video(room: RoomState, messageId: number) {
+		if (this.currentRoom !== room.id || !this.channel) {
 			return { success: false, error: "No channel set" };
 		}
 		try {
@@ -102,15 +104,15 @@ export class TelegramService implements OnModuleInit {
 			if (this.activeVideo) {
 				this.activeVideo.cache.clear();
 			}
-			this.stateService.state.type = "telegram";
-			this.stateService.state.mode = "video";
-			this.stateService.state.id = `${this.channel}:${messageId}`;
-			this.stateService.state.looped = false;
-			this.stateService.state.live = false;
-			this.stateService.state.duration = 0;
-			this.stateService.state.paused = false;
-			this.stateService.resetTime();
-			this.broadcast("video");
+			room.state.type = "telegram";
+			room.state.mode = "video";
+			room.state.id = `${this.channel}:${messageId}`;
+			room.state.looped = false;
+			room.state.live = false;
+			room.state.duration = 0;
+			room.state.paused = false;
+			this.roomService.resetTime(room);
+			this.emit(room, "video");
 			this.activeVideo = { metadata, cache: new ChunkCache() };
 			return { success: true, channel: this.channel };
 		} catch (error) {
@@ -118,10 +120,12 @@ export class TelegramService implements OnModuleInit {
 		}
 	}
 
-	async stream(range: string | undefined, res: Response) {
-		if (!this.client || !range) return;
+	async stream(room: RoomState, range: string | undefined, res: Response) {
 		const video = this.activeVideo;
-		if (!video) return;
+		if (!video || this.currentRoom !== room.id || !this.client || !range) {
+			res.status(404).end();
+			return;
+		}
 		const { metadata, cache } = video;
 		const { fileSize, mimeType } = metadata;
 		const parts = range.replace(/bytes=/, "").split("-");

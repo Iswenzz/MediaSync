@@ -8,7 +8,7 @@ import {
 import { Logger } from "@nestjs/common";
 import { Server, Socket } from "socket.io";
 
-import { StateService } from "@/services/state.service";
+import { RoomService } from "@/services/room.service";
 
 @WebSocketGateway({
 	cors: { origin: [process.env.HOST || "*"] }
@@ -19,18 +19,32 @@ export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
 	@WebSocketServer()
 	server: Server;
 
-	constructor(private stateService: StateService) {}
+	constructor(private rooms: RoomService) {}
 
 	handleConnection(client: Socket) {
-		this.logger.log(`Client connected: ${client.id}`);
-		client.emit("video", this.stateService.getCurrentState());
+		const roomId = this.getRoomId(client);
+		if (!roomId) return;
+		client.join(roomId);
+		this.logger.log(`Client ${client.id} joined room ${roomId}`);
+		const room = this.rooms.get(roomId);
+		if (room) client.emit("video", this.rooms.getCurrentState(room));
 	}
 
 	handleDisconnect(client: Socket) {
 		this.logger.log(`Client disconnected: ${client.id}`);
 	}
 
-	broadcast(event: string, data: any) {
-		this.server.emit(event, data);
+	emitToRoom(roomId: string, event: string, data: any) {
+		this.server.to(roomId).emit(event, data);
+	}
+
+	countClients(roomId: string) {
+		return this.server.sockets.adapter.rooms.get(roomId)?.size ?? 0;
+	}
+
+	private getRoomId(client: Socket) {
+		const room = client.handshake.query.room;
+		if (Array.isArray(room)) return room[0] ?? null;
+		return room ?? null;
 	}
 }
