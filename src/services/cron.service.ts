@@ -6,8 +6,8 @@ import { AppGateway } from "@/app.gateway";
 import { RoomService } from "./room.service";
 
 @Injectable()
-export class RoomCleanupService {
-	private readonly logger = new Logger(RoomCleanupService.name);
+export class CronService {
+	private readonly logger = new Logger(CronService.name);
 
 	constructor(
 		private roomService: RoomService,
