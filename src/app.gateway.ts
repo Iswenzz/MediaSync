@@ -11,6 +11,7 @@ import { Server, Socket } from "socket.io";
 import { RoomService } from "@/services/room.service";
 
 @WebSocketGateway({
+	allowEIO3: true,
 	cors: { origin: [process.env.HOST || "*"] }
 })
 export class AppGateway implements OnGatewayConnection, OnGatewayDisconnect {
