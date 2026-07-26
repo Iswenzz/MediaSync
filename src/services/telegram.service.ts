@@ -3,6 +3,8 @@ import { TelegramClient, Api, sessions } from "telegram";
 import bigInt from "big-integer";
 import type { Response } from "express";
 
+import { Logger as TelegramLogger, LogLevel } from "telegram/extensions/Logger";
+
 import { AppGateway } from "@/app.gateway";
 import { ChunkCache, CHUNK_SIZE } from "@/utils/chunk-cache";
 
@@ -39,15 +41,9 @@ export class TelegramService implements OnModuleInit {
 			this.logger.warn("Missing Telegram credentials");
 			return;
 		}
-		const silentLogger = {
-			debug: () => {},
-			info: () => {},
-			warn: this.logger.warn,
-			error: this.logger.error
-		};
 		this.client = new TelegramClient(new StringSession(stringSession), apiId, apiHash, {
 			connectionRetries: 5,
-			baseLogger: silentLogger as any
+			baseLogger: new TelegramLogger(LogLevel.ERROR)
 		});
 
 		try {
