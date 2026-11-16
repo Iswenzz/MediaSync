@@ -33,6 +33,7 @@ export class VideoService {
 	}
 
 	pause(room: RoomState) {
+		if (!room.state.type) return { success: false, error: "No active media" };
 		room.state.paused = !room.state.paused;
 		if (room.state.paused) {
 			this.roomService.pauseTime(room);
@@ -40,6 +41,13 @@ export class VideoService {
 			this.roomService.resumeTime(room);
 		}
 		this.emit(room, "video-pause");
+		return { success: true, paused: room.state.paused };
+	}
+
+	stop(room: RoomState) {
+		if (!room.state.type) return { success: false, error: "No active media" };
+		this.roomService.clear(room);
+		this.emit(room, "video");
 		return { success: true };
 	}
 

@@ -23,6 +23,11 @@ export class VideoController {
 		return this.videoService.pause(room);
 	}
 
+	@Post("stop")
+	stop(@Query("room", RoomPipe) room: RoomState) {
+		return this.videoService.stop(room);
+	}
+
 	@Post("seek")
 	seek(@Query("room", RoomPipe) room: RoomState, @Query("time") time: string) {
 		return this.videoService.seek(room, time);

@@ -31,6 +31,7 @@ export class YoutubeService {
 		room.state.mode = "video";
 		room.state.id = id;
 		room.state.looped = false;
+		room.state.paused = false;
 		room.state.live = await this.isLiveStream(id);
 		room.state.duration = await this.getVideoDuration(id);
 		this.roomService.resetTime(room);

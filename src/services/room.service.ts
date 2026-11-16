@@ -9,23 +9,35 @@ export class RoomService {
 		if (existing) return existing;
 		const room: RoomState = {
 			id,
-			state: {
-				type: "",
-				mode: "",
-				id: "",
-				index: 0,
-				time: 0,
-				duration: 0,
-				paused: false,
-				looped: false,
-				live: false
-			},
+			state: this.emptyState(),
 			ids: [],
 			startedAt: null,
 			pausedTime: 0
 		};
 		this.rooms.set(id, room);
 		return room;
+	}
+
+	// Back to a new room's state: clients blank on an empty type
+	clear(room: RoomState) {
+		room.state = this.emptyState();
+		room.ids = [];
+		room.startedAt = null;
+		room.pausedTime = 0;
+	}
+
+	private emptyState(): State {
+		return {
+			type: "",
+			mode: "",
+			id: "",
+			index: 0,
+			time: 0,
+			duration: 0,
+			paused: false,
+			looped: false,
+			live: false
+		};
 	}
 
 	get(id: string) {
